@@ -1,0 +1,19 @@
+# Go build artifacts
+/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Coverage and test output
+*.out
+
+# Editor / OS
+.DS_Store
+
+# Local data
+/data/
+
+# Logs
+*.log
