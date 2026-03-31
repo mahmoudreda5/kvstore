@@ -100,3 +100,31 @@ func captureStdout(t *testing.T, fn func()) string {
 
 	return string(data)
 }
+
+func TestRunRejectsEmptyKey(t *testing.T) {
+	dir := t.TempDir()
+
+	err := run([]string{"kvstore", dir, "set", "", "value"})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "key is empty") {
+		t.Fatalf("got %q, want empty key error", err.Error())
+	}
+
+	err = run([]string{"kvstore", dir, "get", ""})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "key is empty") {
+		t.Fatalf("got %q, want empty key error", err.Error())
+	}
+
+	err = run([]string{"kvstore", dir, "delete", ""})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "key is empty") {
+		t.Fatalf("got %q, want empty key error", err.Error())
+	}
+}

@@ -101,3 +101,26 @@ func TestStoreDeletePersistsAfterReopen(t *testing.T) {
 		t.Fatalf("got err %v, want %v", err, ErrNotFound)
 	}
 }
+
+func TestStoreRejectsEmptyKey(t *testing.T) {
+	dir := t.TempDir()
+
+	s, err := Open(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	if err := s.Set([]byte(""), []byte("value")); !errors.Is(err, ErrEmptyKey) {
+		t.Fatalf("set: got %v, want %v", err, ErrEmptyKey)
+	}
+
+	_, err = s.Get([]byte(""))
+	if !errors.Is(err, ErrEmptyKey) {
+		t.Fatalf("get: got %v, want %v", err, ErrEmptyKey)
+	}
+
+	if err := s.Delete([]byte("")); !errors.Is(err, ErrEmptyKey) {
+		t.Fatalf("delete: got %v, want %v", err, ErrEmptyKey)
+	}
+}
