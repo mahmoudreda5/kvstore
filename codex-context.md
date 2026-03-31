@@ -171,3 +171,9 @@ When continuing this project in a future session:
 - prefer small scoped steps
 - when the user asks for diffs only, provide diffs only
 - when the user asks for review, findings first, then fix if requested
+- update this `codex-context.md` file whenever meaningful project progress is made so the handoff stays current
+- when adding a feature, also update the relevant sections here:
+  - implemented behavior
+  - tests present
+  - recent commits if useful for context
+  - recommended next steps
