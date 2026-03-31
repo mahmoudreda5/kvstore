@@ -3,6 +3,7 @@ package store
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -122,6 +123,8 @@ func (s *Store) load() error {
 			s.data[string(rec.key)] = bytes.Clone(rec.val)
 		case opDel:
 			delete(s.data, string(rec.key))
+		default:
+			return fmt.Errorf("unknown WAL op: %d", rec.op)
 		}
 	}
 
