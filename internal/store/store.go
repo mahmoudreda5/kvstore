@@ -57,6 +57,9 @@ func (s *Store) Set(key, value []byte) error {
 	if _, err := s.wal.Write(encodeRecord(rec)); err != nil {
 		return err
 	}
+	if err := s.wal.Sync(); err != nil {
+		return err
+	}
 
 	s.data[string(key)] = bytes.Clone(value)
 	return nil
@@ -86,6 +89,9 @@ func (s *Store) Delete(key []byte) error {
 	}
 
 	if _, err := s.wal.Write(encodeRecord(rec)); err != nil {
+		return err
+	}
+	if err := s.wal.Sync(); err != nil {
 		return err
 	}
 
