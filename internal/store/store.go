@@ -9,6 +9,7 @@ import (
 )
 
 var ErrNotFound = errors.New("key not found")
+var ErrEmptyKey = errors.New("key is empty")
 
 type Store struct {
 	path string
@@ -42,6 +43,10 @@ func Open(path string) (*Store, error) {
 }
 
 func (s *Store) Set(key, value []byte) error {
+	if len(key) == 0 {
+		return ErrEmptyKey
+	}
+
 	rec := record{
 		op: opSet,
 		key: bytes.Clone(key),
@@ -57,6 +62,10 @@ func (s *Store) Set(key, value []byte) error {
 }
 
 func (s *Store) Get(key []byte) ([]byte, error) {
+	if len(key) == 0 {
+		return nil, ErrEmptyKey
+	}
+
 	value, ok := s.data[string(key)]
 	if !ok {
 		return nil, ErrNotFound
@@ -66,6 +75,10 @@ func (s *Store) Get(key []byte) ([]byte, error) {
 }
 
 func (s *Store) Delete(key []byte) error {
+	if len(key) == 0 {
+		return ErrEmptyKey
+	}
+
 	rec := record{
 		op: opDel,
 		key: bytes.Clone(key),
