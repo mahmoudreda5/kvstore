@@ -3,6 +3,9 @@ package store
 import (
 	"bytes"
 	"errors"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -122,5 +125,28 @@ func TestStoreRejectsEmptyKey(t *testing.T) {
 
 	if err := s.Delete([]byte("")); !errors.Is(err, ErrEmptyKey) {
 		t.Fatalf("delete: got %v, want %v", err, ErrEmptyKey)
+	}
+}
+
+func TestOpenRejectsUnknownWALOp(t *testing.T) {
+	dir := t.TempDir()
+
+	walPath := filepath.Join(dir, "wal.log")
+	err := os.WriteFile(walPath, encodeRecord(record{
+		op: 9,
+		key: []byte("name"),
+		val: []byte("mahmoud"),
+	}), 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = Open(dir)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "unknown WAL op") {
+		t.Fatalf("got %q, want unknown WAL op error", err.Error())
 	}
 }
