@@ -38,6 +38,8 @@ func run(args []string) error {
 		return runSet(s, args)
 	case "get":
 		return runGet(s, args)
+	case "has":
+		return runHas(s, args)
 	case "delete":
 		return runDelete(s, args)
 	default:
@@ -103,6 +105,27 @@ func usageText() string {
 	return "usage:\n" +
 		"  kvstore <data-dir> set <key> <value>\n" +
 		"  kvstore <data-dir> get <key>\n" +
+		"  kvstore <data-dir> has <key>\n" +
 		"  kvstore <data-dir> delete <key>\n" +
 		"  kvstore <data-dir> help"
+}
+
+func runHas(s *store.Store, args []string) error {
+	if len(args) != 4 {
+		return fmt.Errorf("usage: kvstore <data-dir> has <key>")
+	}
+
+	key := []byte(args[3])
+
+	_, err := s.Get(key)
+	if errors.Is(err, store.ErrNotFound) {
+		fmt.Println("false")
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("has: %w", err)
+	}
+
+	fmt.Println("true")
+	return nil
 }
