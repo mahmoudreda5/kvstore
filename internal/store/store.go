@@ -119,7 +119,7 @@ func (s *Store) load() error {
 				break
 			}
 			if errors.Is(err, io.ErrUnexpectedEOF) {
-				return err
+				return fmt.Errorf("truncated WAL record: %w", err)
 			}
 			return err
 		}
