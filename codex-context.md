@@ -105,6 +105,7 @@ Covers:
 - delete persistence after reopen
 - empty key rejection
 - rejecting unknown WAL ops during replay
+- rejecting truncated WAL records during replay
 - immediate persistence expectations after `Sync()`
 
 ### CLI Tests
@@ -156,7 +157,7 @@ Recent commits:
 ## Recommended Next Steps
 
 Most sensible next engineering step:
-- handle truncated or partially written WAL records more explicitly and test that `Open()` fails on truncated WAL input
+- improve the replay error message for truncated WAL input so it is clearer than raw `unexpected EOF`
 
 Other reasonable next steps:
 - improve CLI ergonomics further

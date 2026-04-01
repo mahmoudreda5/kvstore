@@ -216,3 +216,30 @@ func TestDeletePersistsImmediately(t *testing.T) {
 		t.Fatalf("got err %v, want %v", err, ErrNotFound)
 	}
 }
+
+func TestOpenRejectsTruncatedWALRecord(t *testing.T) {
+	dir := t.TempDir()
+
+	full := encodeRecord(record{
+		op: opSet,
+		key: []byte("name"),
+		val: []byte("mahmoud"),
+	})
+
+	truncated := full[:len(full)-2]
+
+	walPath := filepath.Join(dir, "wal.log")
+	err := os.WriteFile(walPath, truncated, 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = Open(dir)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "unexpected EOF") {
+		t.Fatalf("got %q, want truncated WAL error", err.Error())
+	}
+}
