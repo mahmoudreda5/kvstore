@@ -239,7 +239,7 @@ func TestOpenRejectsTruncatedWALRecord(t *testing.T) {
 		t.Fatal("expected error, got nil")
 	}
 
-	if !strings.Contains(err.Error(), "unexpected EOF") {
+	if !strings.Contains(err.Error(), "truncated WAL record") {
 		t.Fatalf("got %q, want truncated WAL error", err.Error())
 	}
 }

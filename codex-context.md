@@ -91,6 +91,7 @@ Unknown WAL ops are rejected during replay.
 - `ErrNotFound` for missing keys
 - `ErrEmptyKey` for empty keys
 - unknown WAL op causes `Open()` to fail during replay
+- truncated WAL records cause `Open()` to fail with a clearer replay error message
 
 ## Tests Present
 
@@ -157,7 +158,7 @@ Recent commits:
 ## Recommended Next Steps
 
 Most sensible next engineering step:
-- improve the replay error message for truncated WAL input so it is clearer than raw `unexpected EOF`
+- consider adding checksums or stronger record validation if WAL corruption handling is expanded further
 
 Other reasonable next steps:
 - improve CLI ergonomics further
