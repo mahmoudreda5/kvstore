@@ -128,3 +128,34 @@ func TestRunRejectsEmptyKey(t *testing.T) {
 		t.Fatalf("got %q, want empty key error", err.Error())
 	}
 }
+
+func TestRunHas(t *testing.T) {
+	dir := t.TempDir()
+
+	if err := run([]string{"kvstore", dir, "set", "name", "mahmoud"});
+	err != nil {
+		t.Fatal(err)
+	}
+
+	foundOutput := captureStdout(t, func() {
+		err := run([]string{"kvstore", dir, "has", "name"})
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
+
+	if strings.TrimSpace(foundOutput) != "true" {
+		t.Fatalf("got %q, want %q", foundOutput, "true")
+	}
+
+	missingOutput := captureStdout(t, func() {
+		err := run([]string{"kvstore", dir, "has", "missing"})
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
+
+	if strings.TrimSpace(missingOutput) != "false" {
+		t.Fatalf("got %q, want %q", missingOutput, "false")
+	}
+}

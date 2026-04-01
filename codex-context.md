@@ -28,6 +28,7 @@ Behavior:
 - supports:
   - `set <key> <value>`
   - `get <key>`
+  - `has <key>`
   - `delete <key>`
   - `help`
 - prints errors to stderr through `main()`
@@ -116,6 +117,7 @@ File:
 
 Covers:
 - `set` then `get`
+- `has` for present and missing keys
 - `delete` then `get` not found
 - usage error for too few args
 - empty key rejection through CLI
@@ -162,7 +164,7 @@ Most sensible next engineering step:
 
 Other reasonable next steps:
 - improve CLI ergonomics further
-- add a `has` command
+- consider whether CLI success output should stay human-readable or move toward more Unix-like raw values/statuses
 - add compaction or snapshotting later
 
 ## Working Style Reminder
