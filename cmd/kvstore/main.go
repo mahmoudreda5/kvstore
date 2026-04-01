@@ -8,10 +8,30 @@ import (
 	"kvstore/internal/store"
 )
 
+const (
+	exitOK = iota
+	exitNotFound
+	exitUsage
+	exitRuntime
+)
+
+type cliError struct {
+	code int
+	err error
+}
+
+func (e *cliError) Error() string {
+	return e.err.Error()
+}
+
 func main() {
 	if err := run(os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		var cliErr *cliError
+		if errors.As(err, &cliErr) {
+			os.Exit(cliErr.code)
+		}
+		os.Exit(exitRuntime)
 	}
 }
 
@@ -24,12 +44,13 @@ func run(args []string) error {
 	command := args[2]
 
 	if command == "help" {
-		return usageError()
+		fmt.Println(usageText())
+		return nil
 	}
 
 	s, err := store.Open(dataDir)
 	if err != nil {
-		return fmt.Errorf("open store: %w", err)
+		return runtimeErr(fmt.Errorf("open store: %w", err))
 	}
 	defer s.Close()
 
@@ -43,20 +64,23 @@ func run(args []string) error {
 	case "delete":
 		return runDelete(s, args)
 	default:
-		return fmt.Errorf("unknown command %q\n\n%s", command, usageText())
+		return usageErr(fmt.Errorf("unknown command %q\n\n%s", command, usageText()))
 	}
 }
 
 func runSet(s *store.Store, args []string) error {
 	if len(args) != 5 {
-		return fmt.Errorf("usage: kvstore <data-dir> set <key> <value>")
+		return usageErr(fmt.Errorf("usage: kvstore <data-dir> set <key> <value>"))
 	}
 
 	key := []byte(args[3])
 	value := []byte(args[4])
 
 	if err := s.Set(key, value); err != nil {
-		return fmt.Errorf("set: %w", err)
+		if errors.Is(err, store.ErrEmptyKey) {
+			return usageErr(fmt.Errorf("set: %w", err))
+		}
+		return runtimeErr(fmt.Errorf("set: %w", err))
 	}
 
 	return nil
@@ -64,17 +88,20 @@ func runSet(s *store.Store, args []string) error {
 
 func runGet(s *store.Store, args []string) error {
 	if len(args) != 4 {
-		return fmt.Errorf("usage: kvstore <data-dir> get <key>")
+		return usageErr(fmt.Errorf("usage: kvstore <data-dir> get <key>"))
 	}
 
 	key := []byte(args[3])
 
 	value, err := s.Get(key)
 	if errors.Is(err, store.ErrNotFound) {
-		return fmt.Errorf("key %q not found", key)
+		return notFoundErr(fmt.Errorf("key %q not found", key))
 	}
 	if err != nil {
-		return fmt.Errorf("get: %w", err)
+		if errors.Is(err, store.ErrEmptyKey) {
+			return usageErr(fmt.Errorf("get: %w", err))
+		}
+		return runtimeErr(fmt.Errorf("get: %w", err))
 	}
 
 	fmt.Println(string(value))
@@ -83,20 +110,35 @@ func runGet(s *store.Store, args []string) error {
 
 func runDelete(s *store.Store, args []string) error {
 	if len(args) != 4 {
-		return fmt.Errorf("usage: kvstore <data-dir> delete <key>")
+		return usageErr(fmt.Errorf("usage: kvstore <data-dir> delete <key>"))
 	}
 
 	key := []byte(args[3])
 
 	if err := s.Delete(key); err != nil {
-		return fmt.Errorf("delete: %w", err)
+		if errors.Is(err, store.ErrEmptyKey) {
+			return usageErr(fmt.Errorf("delete: %w", err))
+		}
+		return runtimeErr(fmt.Errorf("delete: %w", err))
 	}
 
 	return nil
 }
 
 func usageError() error {
-	return errors.New(usageText())
+	return usageErr(errors.New(usageText()))
+}
+
+func usageErr(err error) error {
+	return &cliError{code: exitUsage, err: err}
+}
+
+func notFoundErr(err error) error {
+	return &cliError{code: exitNotFound, err: err}
+}
+
+func runtimeErr(err error) error {
+	return &cliError{code: exitRuntime, err: err}
 }
 
 func usageText() string {
@@ -110,7 +152,7 @@ func usageText() string {
 
 func runHas(s *store.Store, args []string) error {
 	if len(args) != 4 {
-		return fmt.Errorf("usage: kvstore <data-dir> has <key>")
+		return usageErr(fmt.Errorf("usage: kvstore <data-dir> has <key>"))
 	}
 
 	key := []byte(args[3])
@@ -118,10 +160,13 @@ func runHas(s *store.Store, args []string) error {
 	_, err := s.Get(key)
 	if errors.Is(err, store.ErrNotFound) {
 		fmt.Println("false")
-		return nil
+		return notFoundErr(errors.New("key not found"))
 	}
 	if err != nil {
-		return fmt.Errorf("has: %w", err)
+		if errors.Is(err, store.ErrEmptyKey) {
+			return usageErr(fmt.Errorf("has: %w", err))
+		}
+		return runtimeErr(fmt.Errorf("has: %w", err))
 	}
 
 	fmt.Println("true")

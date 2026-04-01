@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -69,6 +70,19 @@ func TestRunRequiresEnoughArgs(t *testing.T) {
 
 	if !strings.Contains(err.Error(), "usage:") {
 		t.Fatalf("got %q, want usage error", err.Error())
+	}
+}
+
+func TestRunHelp(t *testing.T) {
+	output := captureStdout(t, func() {
+		err := run([]string{"kvstore", "ignored", "help"})
+		if err != nil {
+			t.Fatal(err)
+		}
+	})
+
+	if !strings.Contains(output, "usage:") {
+		t.Fatalf("got %q, want usage output", output)
 	}
 }
 
@@ -150,12 +164,60 @@ func TestRunHas(t *testing.T) {
 
 	missingOutput := captureStdout(t, func() {
 		err := run([]string{"kvstore", dir, "has", "missing"})
-		if err != nil {
-			t.Fatal(err)
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+
+		var cliErr *cliError
+		if !errors.As(err, &cliErr) {
+			t.Fatalf("got %T, want *cliError", err)
+		}
+		if cliErr.code != exitNotFound {
+			t.Fatalf("got code %d, want %d", cliErr.code, exitNotFound)
 		}
 	})
 
 	if strings.TrimSpace(missingOutput) != "false" {
 		t.Fatalf("got %q, want %q", missingOutput, "false")
+	}
+}
+
+func TestRunGetNotFoundReturnsExitCode1(t *testing.T) {
+	dir := t.TempDir()
+
+	err := run([]string{"kvstore", dir, "get", "missing"})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	var cliErr *cliError
+	if !errors.As(err, &cliErr) {
+		t.Fatalf("got %T, want *cliError", err)
+	}
+	if cliErr.code != exitNotFound {
+		t.Fatalf("got code %d, want %d", cliErr.code, exitNotFound)
+	}
+}
+
+func TestRunHasMissingReturnsFalseAndExitCode1(t *testing.T) {
+	dir := t.TempDir()
+
+	output := captureStdout(t, func() {
+		err := run([]string{"kvstore", dir, "has", "missing"})
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+
+		var cliErr *cliError
+		if !errors.As(err, &cliErr) {
+			t.Fatalf("got %T, want *cliError", err)
+		}
+		if cliErr.code != exitNotFound {
+			t.Fatalf("got code %d, want %d", cliErr.code, exitNotFound)
+		}
+	})
+
+	if strings.TrimSpace(output) != "false" {
+		t.Fatalf("got %q, want %q", output, "false")
 	}
 }

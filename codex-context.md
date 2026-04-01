@@ -34,6 +34,11 @@ Behavior:
 - `set` and `delete` are silent on success
 - `get` prints only the value
 - `has` prints `true` or `false`
+- exit code policy:
+  - `0` success
+  - `1` not found
+  - `2` usage error
+  - `3` runtime/store error
 - prints errors to stderr through `main()`
 - command parsing is handled by:
   - `run(args []string)`
@@ -123,6 +128,8 @@ Covers:
 - `has` for present and missing keys
 - `delete` then `get` not found
 - usage error for too few args
+- help output
+- not-found exit code behavior for `get` and `has`
 - empty key rejection through CLI
 
 ## Notable Go Concepts Already Explained To User
