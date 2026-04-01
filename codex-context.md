@@ -31,6 +31,9 @@ Behavior:
   - `has <key>`
   - `delete <key>`
   - `help`
+- `set` and `delete` are silent on success
+- `get` prints only the value
+- `has` prints `true` or `false`
 - prints errors to stderr through `main()`
 - command parsing is handled by:
   - `run(args []string)`
@@ -164,7 +167,7 @@ Most sensible next engineering step:
 
 Other reasonable next steps:
 - improve CLI ergonomics further
-- consider whether CLI success output should stay human-readable or move toward more Unix-like raw values/statuses
+- consider adding explicit exit-code semantics for `has` or `get` not-found cases if the CLI is pushed further
 - add compaction or snapshotting later
 
 ## Working Style Reminder

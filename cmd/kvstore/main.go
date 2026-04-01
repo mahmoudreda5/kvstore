@@ -59,7 +59,6 @@ func runSet(s *store.Store, args []string) error {
 		return fmt.Errorf("set: %w", err)
 	}
 
-	fmt.Printf("ok set key=%q\n", key)
 	return nil
 }
 
@@ -93,7 +92,6 @@ func runDelete(s *store.Store, args []string) error {
 		return fmt.Errorf("delete: %w", err)
 	}
 
-	fmt.Printf("ok delete key=%q\n", key)
 	return nil
 }
 

@@ -17,8 +17,8 @@ func TestRunSetAndGet(t *testing.T) {
 		}
 	})
 
-	if strings.TrimSpace(setOutput) != `ok set key="name"` {
-		t.Fatalf("got %q, want %q", setOutput, `ok set key="name"`)
+	if strings.TrimSpace(setOutput) != "" {
+		t.Fatalf("got %q, want empty output", setOutput)
 	}
 
 	getOutput := captureStdout(t, func () {
@@ -47,8 +47,8 @@ func TestRunDeleteThenGetNotFound(t *testing.T) {
 		}
 	})
 
-	if strings.TrimSpace(deleteOutput) != `ok delete key="name"` {
-		t.Fatalf("got %q, want %q", deleteOutput, `ok delete key="name"`)
+	if strings.TrimSpace(deleteOutput) != "" {
+		t.Fatalf("got %q, want empty output", deleteOutput)
 	}
 
 	err := run([]string{"kvstore", dir, "get", "name"})
