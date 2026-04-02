@@ -130,6 +130,9 @@ func (s *Store) load() error {
 			if errors.Is(err, io.ErrUnexpectedEOF) {
 				return fmt.Errorf("truncated WAL record: %w", err)
 			}
+			if errors.Is(err, errInvalidChecksum) {
+				return fmt.Errorf("invalid WAL checksum: %w", err)
+			}
 			return err
 		}
 
