@@ -157,11 +157,7 @@ func runHas(s *store.Store, args []string) error {
 
 	key := []byte(args[3])
 
-	_, err := s.Get(key)
-	if errors.Is(err, store.ErrNotFound) {
-		fmt.Println("false")
-		return notFoundErr(errors.New("key not found"))
-	}
+	found, err := s.Has(key)
 	if err != nil {
 		if errors.Is(err, store.ErrEmptyKey) {
 			return usageErr(fmt.Errorf("has: %w", err))
@@ -169,6 +165,11 @@ func runHas(s *store.Store, args []string) error {
 		return runtimeErr(fmt.Errorf("has: %w", err))
 	}
 
-	fmt.Println("true")
-	return nil
+	if found {
+		fmt.Println("true")
+		return nil
+	}
+
+	fmt.Println("false")
+	return notFoundErr(errors.New("key not found"))
 }

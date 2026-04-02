@@ -59,6 +59,7 @@ Behavior:
 - `Set` appends a WAL record, calls `Sync()`, then updates memory
 - `Delete` appends a WAL record, calls `Sync()`, then updates memory
 - `Get` reads from memory
+- `Has` checks key existence directly from memory
 - `Close` closes the WAL file
 
 ### WAL Format
@@ -111,6 +112,7 @@ File:
 
 Covers:
 - set/get
+- direct `Has` behavior
 - persistence after reopen
 - delete persistence after reopen
 - empty key rejection
@@ -126,6 +128,7 @@ File:
 Covers:
 - `set` then `get`
 - `has` for present and missing keys
+- `has` empty-key usage handling
 - `delete` then `get` not found
 - usage error for too few args
 - help output

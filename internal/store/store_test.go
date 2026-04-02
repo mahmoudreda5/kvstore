@@ -243,3 +243,54 @@ func TestOpenRejectsTruncatedWALRecord(t *testing.T) {
 		t.Fatalf("got %q, want truncated WAL error", err.Error())
 	}
 }
+
+func TestStoreHas(t *testing.T) {
+	dir := t.TempDir()
+
+	s, err := Open(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	key := []byte("name")
+	value := []byte("mahmoud")
+
+	found, err := s.Has(key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if found {
+		t.Fatal("expected key to be missing")
+	}
+
+	if err := s.Set(key, value); err != nil {
+		t.Fatal(err)
+	}
+
+	found, err = s.Has(key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !found {
+		t.Fatal("expected key to exist")
+	}
+}
+
+func  TestStoreHasRejectsEmptyKey(t *testing.T) {
+	dir := t.TempDir()
+
+	s, err := Open(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	found, err := s.Has([]byte(""))
+	if !errors.Is(err, ErrEmptyKey) {
+		t.Fatalf("got %v, want %v", err, ErrEmptyKey)
+	}
+	if found {
+		t.Fatal("expected found=false for empty key")
+	}
+}

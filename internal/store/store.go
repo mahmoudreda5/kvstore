@@ -78,6 +78,15 @@ func (s *Store) Get(key []byte) ([]byte, error) {
 	return bytes.Clone(value), nil
 }
 
+func (s *Store) Has(key []byte) (bool, error) {
+	if len(key) == 0 {
+		return false, ErrEmptyKey
+	}
+
+	_, ok := s.data[string(key)]
+	return ok, nil
+}
+
 func (s *Store) Delete(key []byte) error {
 	if len(key) == 0 {
 		return ErrEmptyKey

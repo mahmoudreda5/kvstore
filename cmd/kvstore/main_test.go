@@ -221,3 +221,20 @@ func TestRunHasMissingReturnsFalseAndExitCode1(t *testing.T) {
 		t.Fatalf("got %q, want %q", output, "false")
 	}
 }
+
+func TestRunHasRejectsEmptyKey(t *testing.T) {
+	dir := t.TempDir()
+
+	err := run([]string{"kvstore", dir, "has", ""})
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	var cliErr *cliError
+	if !errors.As(err, &cliErr) {
+		t.Fatalf("got %T, want *cliError", err)
+	}
+	if cliErr.code != exitUsage {
+		t.Fatalf("got code %d, want %d", cliErr.code, exitUsage)
+	}
+}
