@@ -177,7 +177,9 @@ Recent commits:
 ## Recommended Next Steps
 
 Most sensible next engineering step:
-- consider WAL format versioning or migration support, since checksum-based records are now incompatible with older WAL files
+- compaction / snapshotting, to avoid unbounded WAL growth and teach storage lifecycle
+- WAL format versioning or migration support, since checksum-based records are now incompatible with older WAL files
+- a clearer recovery policy for corrupted WALs
 
 Other reasonable next steps:
 - improve CLI ergonomics further
@@ -198,3 +200,4 @@ When continuing this project in a future session:
   - tests present
   - recent commits if useful for context
   - recommended next steps
+- when one of the listed next steps is implemented, remove it from the list and replace it with the next most relevant follow-up item
