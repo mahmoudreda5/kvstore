@@ -65,6 +65,7 @@ Behavior:
 ### WAL Format
 
 In `internal/store/wal.go`, each record is encoded as:
+- 4 bytes: CRC32 checksum
 - 1 byte: operation
 - 4 bytes: key length
 - 4 bytes: value length
@@ -76,6 +77,7 @@ Supported operations:
 - `opDel = 2`
 
 Unknown WAL ops are rejected during replay.
+Checksum mismatches are rejected during replay.
 
 ## Important Behavior Implemented
 
@@ -102,6 +104,7 @@ Unknown WAL ops are rejected during replay.
 - `ErrEmptyKey` for empty keys
 - unknown WAL op causes `Open()` to fail during replay
 - truncated WAL records cause `Open()` to fail with a clearer replay error message
+- corrupted WAL records with checksum mismatch cause `Open()` to fail during replay
 
 ## Tests Present
 
@@ -118,6 +121,7 @@ Covers:
 - empty key rejection
 - rejecting unknown WAL ops during replay
 - rejecting truncated WAL records during replay
+- rejecting corrupted WAL checksum during replay
 - immediate persistence expectations after `Sync()`
 
 ### CLI Tests
@@ -173,7 +177,7 @@ Recent commits:
 ## Recommended Next Steps
 
 Most sensible next engineering step:
-- consider adding checksums or stronger record validation if WAL corruption handling is expanded further
+- consider WAL format versioning or migration support, since checksum-based records are now incompatible with older WAL files
 
 Other reasonable next steps:
 - improve CLI ergonomics further

@@ -244,6 +244,33 @@ func TestOpenRejectsTruncatedWALRecord(t *testing.T) {
 	}
 }
 
+func TestOpenRejectsCorruptedWALChecksum(t *testing.T) {
+	dir := t.TempDir()
+
+	full := encodeRecord(record{
+		op:  opSet,
+		key: []byte("name"),
+		val: []byte("mahmoud"),
+	})
+
+	full[len(full)-1] ^= 0xff
+
+	walPath := filepath.Join(dir, "wal.log")
+	err := os.WriteFile(walPath, full, 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = Open(dir)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "invalid WAL checksum") {
+		t.Fatalf("got %q, want checksum error", err.Error())
+	}
+}
+
 func TestStoreHas(t *testing.T) {
 	dir := t.TempDir()
 
@@ -277,7 +304,7 @@ func TestStoreHas(t *testing.T) {
 	}
 }
 
-func  TestStoreHasRejectsEmptyKey(t *testing.T) {
+func TestStoreHasRejectsEmptyKey(t *testing.T) {
 	dir := t.TempDir()
 
 	s, err := Open(dir)
