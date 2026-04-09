@@ -29,6 +29,27 @@ func Open(path string) (*Store, error) {
 		return nil, err
 	}
 
+	info, err := wal.Stat()
+	if err != nil {
+		_ = wal.Close()
+		return nil, err
+	}
+
+	if info.Size() == 0 {
+		if _, err := wal.Seek(0, 0); err != nil {
+			_ = wal.Close()
+			return nil, err
+		}
+		if err := writeWALHeader(wal); err != nil {
+			_ = wal.Close()
+			return nil, err
+		}
+		if err := wal.Sync(); err != nil {
+			_ = wal.Close()
+			return nil, err
+		}
+	}
+
 	s := &Store{
 		path: path,
 		data: make(map[string][]byte),
@@ -121,6 +142,14 @@ func (s *Store) load() error {
 		return err
 	}
 
+	version, err := readWALHeader(s.wal)
+	if err != nil {
+		return err
+	}
+	if version != walVersion1 {
+		return fmt.Errorf("unsupported WAL version: %d", version)
+	}
+
 	for {
 		rec, err := decodeRecord(s.wal)
 		if err != nil {
@@ -146,6 +175,6 @@ func (s *Store) load() error {
 		}
 	}
 
-	_, err := s.wal.Seek(0, io.SeekEnd)
+	_, err = s.wal.Seek(0, io.SeekEnd)
 	return err
 }

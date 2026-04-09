@@ -18,6 +18,10 @@ type record struct {
 	val []byte
 }
 
+var walMagic = [4]byte{'K', 'V', 'S', 'W'}
+
+const walVersion1 byte = 1
+
 var errInvalidChecksum = errors.New("invalid WAL checksum")
 
 func encodeRecord(r record) []byte {
@@ -81,4 +85,27 @@ func decodeRecord(rd io.Reader) (record, error) {
 	}
 
 	return record{op: op, key: key, val: val}, nil
+}
+
+func writeWALHeader(w io.Writer) error {
+	header := make([]byte, 5)
+	copy(header[0:4], walMagic[:])
+	header[4] = walVersion1
+
+	_, err := w.Write(header)
+	return err
+}
+
+func readWALHeader(r io.Reader) (byte, error) {
+	var header [5]byte
+	_, err := io.ReadFull(r, header[:])
+	if err != nil {
+		return 0, err
+	}
+
+	if string(header[0:4]) != string(walMagic[:]) {
+		return 0, errors.New("invalid WAL header")
+	}
+
+	return header[4], nil
 }
