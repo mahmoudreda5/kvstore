@@ -65,6 +65,8 @@ Behavior:
 ### WAL Format
 
 In `internal/store/wal.go`, each record is encoded as:
+- 4 bytes: magic `KVSW`
+- 1 byte: WAL file version
 - 4 bytes: CRC32 checksum
 - 1 byte: operation
 - 4 bytes: key length
@@ -75,6 +77,9 @@ In `internal/store/wal.go`, each record is encoded as:
 Supported operations:
 - `opSet = 1`
 - `opDel = 2`
+
+Current WAL file version:
+- `1`
 
 Unknown WAL ops are rejected during replay.
 Checksum mismatches are rejected during replay.
@@ -178,13 +183,12 @@ Recent commits:
 
 Most sensible next engineering step:
 - compaction / snapshotting, to avoid unbounded WAL growth and teach storage lifecycle
-- WAL format versioning or migration support, since checksum-based records are now incompatible with older WAL files
+- consider WAL migration support only if older pre-header or pre-checksum files ever need to be supported again
 - a clearer recovery policy for corrupted WALs
 
 Other reasonable next steps:
 - improve CLI ergonomics further
 - consider adding explicit exit-code semantics for `has` or `get` not-found cases if the CLI is pushed further
-- add compaction or snapshotting later
 
 ## Working Style Reminder
 

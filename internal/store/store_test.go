@@ -132,11 +132,16 @@ func TestOpenRejectsUnknownWALOp(t *testing.T) {
 	dir := t.TempDir()
 
 	walPath := filepath.Join(dir, "wal.log")
-	err := os.WriteFile(walPath, encodeRecord(record{
-		op: 9,
+	data := make([]byte, 0, 5+32)
+	data = append(data, walMagic[:]...)
+	data = append(data, walVersion1)
+	data = append(data, encodeRecord(record{
+		op:  9,
 		key: []byte("name"),
 		val: []byte("mahmoud"),
-	}), 0o644)
+	})...)
+
+	err := os.WriteFile(walPath, data, 0o644)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -229,7 +234,12 @@ func TestOpenRejectsTruncatedWALRecord(t *testing.T) {
 	truncated := full[:len(full)-2]
 
 	walPath := filepath.Join(dir, "wal.log")
-	err := os.WriteFile(walPath, truncated, 0o644)
+	data := make([]byte, 0, 5+len(truncated))
+	data = append(data, walMagic[:]...)
+	data = append(data, walVersion1)
+	data = append(data, truncated...)
+
+	err := os.WriteFile(walPath, data, 0o644)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -256,7 +266,12 @@ func TestOpenRejectsCorruptedWALChecksum(t *testing.T) {
 	full[len(full)-1] ^= 0xff
 
 	walPath := filepath.Join(dir, "wal.log")
-	err := os.WriteFile(walPath, full, 0o644)
+	data := make([]byte, 0, 5+len(full))
+	data = append(data, walMagic[:]...)
+	data = append(data, walVersion1)
+	data = append(data, full...)
+
+	err := os.WriteFile(walPath, data, 0o644)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -319,5 +334,70 @@ func TestStoreHasRejectsEmptyKey(t *testing.T) {
 	}
 	if found {
 		t.Fatal("expected found=false for empty key")
+	}
+}
+
+func TestOpenWritesWALHeaderForNewStore(t *testing.T) {
+	dir := t.TempDir()
+
+	s, err := Open(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+
+	walPath := filepath.Join(dir, "wal.log")
+	data, err := os.ReadFile(walPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(data) < 5 {
+		t.Fatalf("wal too short: %d", len(data))
+	}
+	if string(data[0:4]) != string(walMagic[:]) {
+		t.Fatalf("got magic %q, want %q", data[0:4], walMagic[:])
+	}
+	if data[4] != walVersion1 {
+		t.Fatalf("got version %d, want %d", data[4], walVersion1)
+	}
+}
+
+func TestOpenRejectsInvalidWALHeader(t *testing.T) {
+	dir := t.TempDir()
+
+	walPath := filepath.Join(dir, "wal.log")
+	err := os.WriteFile(walPath, []byte("BAD!\x02"), 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = Open(dir)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "invalid WAL header") {
+		t.Fatalf("got %q, want invalid header error", err.Error())
+	}
+}
+
+func TestOpenRejectsUnsupportedWALVersion(t *testing.T) {
+	dir := t.TempDir()
+
+	walPath := filepath.Join(dir, "wal.log")
+	header := []byte{'K', 'V', 'S', 'W', 9}
+	err := os.WriteFile(walPath, header, 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = Open(dir)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "unsupported WAL version") {
+		t.Fatalf("got %q, want unsupported version error", err.Error())
 	}
 }
